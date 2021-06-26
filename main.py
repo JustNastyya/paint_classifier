@@ -1,37 +1,36 @@
 import telebot
 from config import *
-from solution import *
-from message_from_list import *
 
 bot = telebot.TeleBot(token)
+
+keyboard = telebot.types.ReplyKeyboardMarkup(True)  # main keyboard with 4 buttons
+keyboard.row('Список художников', 'Список стилей', 'Стих')
+
+
+def send_info(msg, message):
+    bot.send_message(message.chat.id, info[msg][1], reply_markup=keyboard)
+    photo = open(f'images/{info[msg][0]}', 'rb')
+    bot.send_photo(message.chat.id, photo)
 
 
 @bot.message_handler(commands = ['start'])
 def start_message(message):
-    bot.send_message(message.chat.id, 'Отправьте фотографию для распознования')
+    bot.send_message(message.chat.id, 'Привет! Я могу рассказать о некоторых интересных художниках и стилях!', reply_markup=keyboard)
 
 
 @bot.message_handler(content_types = ['text'])
-def send_text(message):  # if users message is a text
-    if message.text.lower() == 'стих':
-        bot.send_message(message.chat.id, birthday_poem)
+def send_text(message):
+    msg = message.text.lower()
+    if msg == 'стих':
+        bot.send_message(message.chat.id, birthday_poem, reply_markup=keyboard)
+    elif msg == 'список художников':
+        bot.send_message(message.chat.id, painter_list, reply_markup=keyboard)
+    elif msg == 'список стилей':
+        bot.send_message(message.chat.id, style_list, reply_markup=keyboard)
+    elif msg in info.keys():
+        send_info(msg, message)
     else:
-        bot.send_message(message.chat.id, 'Таких команд я не знаю')
-
-
-def ask_about_error(message):
-    global isRunning, e
-    answer = message.text.lower()
-    if answer == 'да':
-        bot.send_message(message.chat.id, 'Хорошо, высылаю ошибку')
-        bot.send_message(message.chat.id, e)
-        isRunning = False
-    elif answer == 'нет':
-        bot.send_message(message.chat.id, 'Хорошо, продолжаем')
-        isRunning = False
-    else:
-        msg = bot.send_message(message.chat.id, 'Прошу ответить "да" или "нет"')
-        bot.register_next_step_handler(msg, ask_about_error)
+        bot.send_message(message.chat.id, 'Таких команд я не знаю', reply_markup=keyboard)
 
 
 @bot.message_handler(content_types= ["photo"])
